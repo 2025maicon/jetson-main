@@ -11,12 +11,13 @@ YOLO_WEIGHTS_PATH = "models/road_v2_best.pt"
 
 # 데이터셋 클래스 이름들 (Roboflow data.yaml 기준으로 맞춰서 수정)
 CLASS_NAMES = [
-    "cone_left",
-    "cone_right",
-    "pothole",
-    "marker",
-    "ally_qr",
-    "fire_building",
+    "hazmat",
+    "missile",
+    "enemy",
+    "tank",
+    "car",
+    "mortar",
+    "box",
     # TODO: 실제 클래스 이름에 맞게 채우기
 ]
 

@@ -12,10 +12,6 @@ class SimpleTracker:
         self.next_id = 0
 
     def update(self, detections):
-        """
-        detections: [[x1,y1,x2,y2,score,class], ...]
-        Returns: list of (track_id, class, box)
-        """
         new_track_ids = []
         results = []
 
@@ -62,28 +58,36 @@ class SimpleTracker:
 
 
 class YOLODetector:
-    """YOLO + SimpleTracker 기반 객체 감지 및 처리"""
+    """YOLO + SimpleTracker 기반 객체 감지 + ROI 적용"""
 
     def __init__(self, model, aruco_detector=None, conf=0.45):
         self.model = model
         self.aruco_detector = aruco_detector
         self.object_names = OBJECT_NAMES
         self.conf = conf
-
-        # 초경량 트래커
-        self.tracker = SimpleTracker(iou_th=0.2)
-
-        # track_id 중복 카운트 방지
+        self.tracker = SimpleTracker(iou_th=1)
         self.counted_ids = set()
+
+        # ROI 하단 기준 (아래에서 20~80 px)
+        self.ROI_BOTTOM_MARGIN = 80
+        self.ROI_HEIGHT = 240
 
     def detect_objects(self, frame, frame_idx, detection_interval=1):
         if frame_idx % detection_interval != 0:
             return None, None
 
-        frame_for_yolo = frame.copy()
-        results = self.model(frame_for_yolo, conf=self.conf, verbose=False)[0]
+        h, w, _ = frame.shape
 
-        # YOLO → tracker 입력
+        # ROI 범위 계산
+        roi_y1 = max(0, h - self.ROI_HEIGHT)      # 아래에서 80px
+        roi_y2 = max(0, h - self.ROI_BOTTOM_MARGIN)  # 아래에서 20px
+
+        # ROI 추출
+        roi = frame[roi_y1:roi_y2, :]
+
+        # YOLO 감지
+        results = self.model(roi, conf=self.conf, verbose=False)[0]
+
         detections = []
         if results.boxes:
             xyxy = results.boxes.xyxy.cpu().numpy()
@@ -91,45 +95,46 @@ class YOLODetector:
             clss = results.boxes.cls.cpu().numpy()
 
             for box, score, cls in zip(xyxy, confs, clss):
-                detections.append([*box, float(score), int(cls)])
+                x1, y1, x2, y2 = box
+
+                # ROI → 원본 좌표 복구
+                y1 += roi_y1
+                y2 += roi_y1
+
+                detections.append([x1, y1, x2, y2, float(score), int(cls)])
 
         tracks = self.tracker.update(detections)
 
         detected_counts = defaultdict(int)
         annotated = frame.copy()
 
-        # AruCo 초기화
+        # ArUco point 초기화
         if self.aruco_detector and self.aruco_detector.get_current_point() is None:
             self.aruco_detector.set_current_point("Alpha")
 
+        # 시각화 및 카운트
         for track_id, cls, box in tracks:
             class_name = self.object_names[cls]
             x1, y1, x2, y2 = box
 
-            # 신규 등장한 track_id만 카운트
             if track_id not in self.counted_ids:
                 self.counted_ids.add(track_id)
                 detected_counts[class_name] += 1
-
                 if self.aruco_detector:
                     self.aruco_detector.update_detection(class_name)
 
-            # 시각화
-            cv2.rectangle(
-                annotated,
-                (int(x1), int(y1)),
-                (int(x2), int(y2)),
-                (0, 255, 0),
-                2
-            )
-            cv2.putText(
-                annotated,
-                f"{class_name} ID:{track_id}",
-                (int(x1), int(y1) - 10),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.6,
-                (0, 255, 0),
-                2
-            )
+            cv2.rectangle(annotated, (int(x1), int(y1)), (int(x2), int(y2)), (0,255,0), 2)
+            cv2.putText(annotated, f"{class_name} ID:{track_id}",
+                        (int(x1), int(y1)-10),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,0), 2)
+
+        # ROI 영역 표시(디버그용)
+        cv2.rectangle(
+            annotated,
+            (0, roi_y1),
+            (w, roi_y2),
+            (255, 0, 0),
+            2
+        )
 
         return annotated, detected_counts

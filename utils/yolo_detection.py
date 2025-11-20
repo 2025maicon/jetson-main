@@ -21,7 +21,7 @@ class YOLODetector:
         self.previous_boxes = []       # [(x1,y1,x2,y2,class), ...]
 
         # 판단 기준
-        self.IOU_TH = 0.3              # IoU threshold
+        self.IOU_TH = 0.4              # IoU threshold
         self.DIST_TH = 40              # 중심점 거리 threshold(px 단위)
 
     # -------------------------

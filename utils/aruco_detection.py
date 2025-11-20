@@ -132,33 +132,67 @@ class ArUcoDetector:
     
     def detect(self, frame):
         """
-        전처리 기반 ArUco 감지 (Nano 최적화)
+        최적화된 ArUco 마커 감지 (ROI + CLAHE + Sharpen + AdaptiveThreshold)
         Returns:
             corners, ids, rejected
         """
-        # 1) Grayscale
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-        # 2) 대비 증가 (CLAHE)
-        clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
+        h, w, _ = frame.shape
+
+        # -------------------------------------------
+        # 1) ROI 설정 (하단 50%만 검사) → 인식률/속도 향상
+        # -------------------------------------------
+        roi_y1 = h // 2
+        roi = frame[roi_y1:h, :]
+
+        # -------------------------------------------
+        # 2) 그레이스케일
+        # -------------------------------------------
+        gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+
+        # -------------------------------------------
+        # 3) CLAHE (대비 증가 → 작은 마커 검출력 크게 향상)
+        # -------------------------------------------
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
         gray = clahe.apply(gray)
 
-        # 3) 노이즈 감소
+        # -------------------------------------------
+        # 4) GaussianBlur (노이즈 제거 → threshold 안정성 증가)
+        # -------------------------------------------
         gray = cv2.GaussianBlur(gray, (5, 5), 0)
 
-        # 4) Adaptive Threshold
-        # 조명 변화가 있거나 반사광이 있을 때 검출 안정성이 가장 좋아짐
-        thresh = cv2.adaptiveThreshold(gray,
-                                    255,
-                                    cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-                                    cv2.THRESH_BINARY,
-                                    15,
-                                    2)
+        # -------------------------------------------
+        # 5) Sharpen (작은 마커 edge 강화)
+        # -------------------------------------------
+        blur = cv2.GaussianBlur(gray, (0, 0), 3)
+        sharpen = cv2.addWeighted(gray, 1.5, blur, -0.5, 0)
 
-        # 5) ArUco detect 수행 (전처리된 이미지)
+        # -------------------------------------------
+        # 6) Adaptive Threshold (조명·반사에 가장 강력)
+        # -------------------------------------------
+        thresh = cv2.adaptiveThreshold(
+            sharpen,
+            255,
+            cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+            cv2.THRESH_BINARY,
+            15,      # blockSize
+            2        # C값
+        )
+
+        # -------------------------------------------
+        # 7) ArUco detect (전처리된 이미지)
+        # -------------------------------------------
         corners, ids, rejected = self.detector.detectMarkers(thresh)
 
+        # -------------------------------------------
+        # 8) ROI → 원본 좌표 복구 (draw는 원본 frame에서)
+        # -------------------------------------------
+        if corners is not None:
+            for c in corners:
+                c[:, :, 1] += roi_y1  # y좌표만 ROI offset 보정
+
         return corners, ids, rejected
+
 
     def update_detection(self, class_name):
         """현재 point에 detection 정보 누적"""

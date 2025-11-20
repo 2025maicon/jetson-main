@@ -66,6 +66,7 @@ def send_to_server(point=None, detected_objects=None, points=None, fire_building
         "points": final_points,
         "detection": final_detection
     }
+    print("통신보고 json 파일 내용 : ",payload)
 
     json_content = json.dumps(payload, indent=2, ensure_ascii=False)
     files = {
@@ -113,6 +114,8 @@ def send_dashboard_image(image_path):
                 files=files,
                 timeout=10
             )
+        print("요청 주소 : ",f'{SERVER_URL}/img/dashboard/fire_building')
+        print("요청 파일 : ",image_path.split('/')[-1])
         
         print(f"[SEND IMAGE] 서버 응답: {response.text}")
         

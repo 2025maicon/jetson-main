@@ -123,7 +123,7 @@ def check_and_handle_pothole(bird, tiki):
         pothole_counter = 0
 
     if pothole_counter >= POTHOLE_DETECT_FRAMES:
-        print(f"[POTHOLE] 감지: white_frac={white_frac:.3f} baseline={baseline_white:.3f} → 회피 수행")
+        # print(f"[POTHOLE] 감지: white_frac={white_frac:.3f} baseline={baseline_white:.3f} → 회피 수행")
         avoid_pothole_left(tiki)
         pothole_counter = 0
 

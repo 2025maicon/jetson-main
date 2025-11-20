@@ -143,7 +143,7 @@ class ArUcoDetector:
                 if sector_number:
                     section_num = sector_number.group()
 
-                    image_filename = f"{mission_code}_section{section_num}.jpg"
+                    image_filename = f"{mission_code}_sector{section_num}.jpg"
                     image_path = os.path.join("/tmp", image_filename)
 
                     # 이미지 저장

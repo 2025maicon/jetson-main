@@ -76,7 +76,7 @@ class YOLODetector:
         # track_id 중복 카운트 방지
         self.counted_ids = set()
 
-    def detect_objects(self, frame, frame_idx, detection_interval=5):
+    def detect_objects(self, frame, frame_idx, detection_interval=2):
         if frame_idx % detection_interval != 0:
             return None, None
 

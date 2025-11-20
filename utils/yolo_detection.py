@@ -71,12 +71,12 @@ class YOLODetector:
         self.conf = conf
 
         # 초경량 트래커
-        self.tracker = SimpleTracker(iou_th=0.4)
+        self.tracker = SimpleTracker(iou_th=0.3)
 
         # track_id 중복 카운트 방지
         self.counted_ids = set()
 
-    def detect_objects(self, frame, frame_idx, detection_interval=2):
+    def detect_objects(self, frame, frame_idx, detection_interval=1):
         if frame_idx % detection_interval != 0:
             return None, None
 

@@ -133,7 +133,7 @@ def wait_for_json_file(max_retries=10):
     
     print(f"[WAIT] JSON 파일 대기 중: {JSON_PATH}")
     while not os.path.exists(JSON_PATH):
-        print(f"[WAIT] JSON 파일 대기 중... (0.5초마다 확인)")
+        # print(f"[WAIT] JSON 파일 대기 중... (0.5초마다 확인)")
         time.sleep(0.5)
     
     # 파일이 생성되었지만 아직 쓰기 중일 수 있으므로, 읽기 성공할 때까지 재시도

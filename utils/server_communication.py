@@ -105,7 +105,7 @@ def send_dashboard_image(image_path):
         
         with open(image_file, "rb") as f:
             files = {
-                'file': (image_file.name, f, 'image/jpeg')
+                'file': (image_path.split('/')[-1], f, 'image/jpeg')
             }
             
             response = requests.post(

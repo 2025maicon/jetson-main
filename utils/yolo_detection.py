@@ -65,12 +65,12 @@ class YOLODetector:
         self.aruco_detector = aruco_detector
         self.object_names = OBJECT_NAMES
         self.conf = conf
-        self.tracker = SimpleTracker(iou_th=0.2)
+        self.tracker = SimpleTracker(iou_th=1.5)
         self.counted_ids = set()
 
         # ROI 하단 기준 (아래에서 20~80 px)
         self.ROI_BOTTOM_MARGIN = 80
-        self.ROI_HEIGHT = 200
+        self.ROI_HEIGHT = 240
 
     def detect_objects(self, frame, frame_idx, detection_interval=1):
         if frame_idx % detection_interval != 0:

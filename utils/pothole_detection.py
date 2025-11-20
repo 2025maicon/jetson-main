@@ -127,3 +127,4 @@ def check_and_handle_pothole(bird, tiki):
         avoid_pothole_left(tiki)
         pothole_counter = 0
 
+

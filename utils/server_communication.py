@@ -119,3 +119,57 @@ def send_dashboard_image(image_path):
     except Exception as e:
         print(f"[ERROR] 이미지 전송 실패: {e}")
 
+
+def startSend():
+    """시작 통신 전송 (startdashboard 로직)
+    JSON 파일에서 mission_code를 읽어서 빈 상태의 초기 데이터를 서버로 전송
+    """
+    # JSON 파일에서 mission_code 읽기
+    mission_code = "A3R8"  # 기본값
+    try:
+        with open(JSON_PATH, 'r', encoding='utf-8') as f:
+            json_data = json.load(f)
+            mission_code = json_data.get('mission_code', 'A3R8')
+    except (FileNotFoundError, json.JSONDecodeError, IOError) as e:
+        print(f"[START] [WARNING] JSON 파일 읽기 실패, 기본값 사용: {e}")
+    
+    # 시작 데이터 생성 (startdashboard.ipynb 형식)
+    start_data = {
+        "mission_code": mission_code,
+        "fire_buildings": [],
+        "points": [],
+        "detection": {
+            "Alpha": [],
+            "Bravo": [],
+            "Charlie": []
+        }
+    }
+    
+    # 시작 통신 전송
+    try:
+        json_content = json.dumps(start_data, indent=2, ensure_ascii=False)
+        filename = f"mission_{mission_code}.json"
+        
+        files = {
+            'file': (filename, json_content, 'application/json')
+        }
+        
+        print(f"[START] 대시보드 시작 통신 전송 중: {filename} ...")
+        response = requests.post(
+            f"{SERVER_URL}/dashboard_json",
+            files=files,
+            timeout=10
+        )
+        
+        print(f"[START] 서버 응답: {response.text}")
+        if response.status_code == 200:
+            print(f"[START] ✓ 시작 통신 전송 성공")
+            return True
+        else:
+            print(f"[START] ✗ 시작 통신 전송 실패 (상태 코드: {response.status_code})")
+            return False
+            
+    except Exception as e:
+        print(f"[START] [ERROR] 시작 통신 전송 실패: {e}")
+        return False
+

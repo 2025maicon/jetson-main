@@ -28,108 +28,59 @@ class ArUcoDetector:
         self.point_detections = defaultdict(lambda: defaultdict(int))
     
     def process_markers(self, frame, ids, corners):
-        """ArUco 마커 처리 및 point/sector 처리
-        
-        Args:
-            frame: 원본 프레임
-            ids: 감지된 마커 ID 리스트
-            corners: 마커 코너 좌표
-            
-        Returns:
-            bool: point가 감지되어 서버로 전송되었는지 여부
-        """
+        """ArUco 마커 처리 및 point/sector 처리"""
+
         if ids is None:
-            return False
-        
+            return False, False, None
+
         ids_list = [int(i[0]) for i in ids]
+
         point_detected = False
-        
+        sector_detected = False
+        sector_name = None
+
         for marker_id in ids_list:
             if marker_id not in self.marker_to_point:
                 continue
-                
-            info = self.marker_to_point[marker_id]
             
+            info = self.marker_to_point[marker_id]
+
             if info['kind'] == 'point':
                 point_detected = self._handle_point(info, frame)
+
             else:
-                self._handle_sector(info, frame)
-        
-        # 마커 시각화
+                sector_detected = True
+                sector_name = info['name']
+                self._handle_sector(info, frame)   # JSON 로직만 처리
+
+        # 시각화
         if ids is not None:
             cv2.aruco.drawDetectedMarkers(frame, corners, ids)
-        
-        return point_detected
-    
-    def _handle_point(self, info, frame):
-        """Point 마커 처리"""
-        point_name = info['name']
-        self.current_point = point_name
-        
-        if point_name not in self.visited_points:
-            self.visited_points.add(point_name)
-            self.transmitted_points.append(point_name)
-            
-            # 모든 point에 대해 누적 detection 정보 변환
-            detection_for_payload = {}
-            for pt in self.transmitted_points:
-                detection_list = []
-                if pt in self.point_detections:
-                    for class_name, count in self.point_detections[pt].items():
-                        if count > 0:
-                            detection_list.append({"type": class_name, "count": count})
-                detection_for_payload[pt] = detection_list
-            
-            print(f"[POINT] {point_name} 최초 통과 → 대시보드로 전송 (points 업데이트, detection: {detection_for_payload})")
-            send_to_server(points=self.transmitted_points, detected_objects=detection_for_payload)
-            return True
-        
-        return False
+
+        return point_detected, sector_detected, sector_name
+
     
     def _handle_sector(self, info, frame):
-        """Sector 마커 처리 (fire_building 이미지 캡처)"""
         sector_name = info['name']
         print(f"[SECTOR] 감지: {sector_name}")
-        
+
         try:
             with open(JSON_PATH, 'r', encoding='utf-8') as f:
                 json_data = json.load(f)
             
             fire_buildings = json_data.get("fire_buildings", [])
             mission_code = json_data.get("mission_code", "A3R8")
-            
-            # fire_buildings에 포함되어 있고, 아직 전송하지 않은 sector인 경우
+
             if sector_name in fire_buildings and sector_name not in self.visited_sectors:
                 self.visited_sectors.add(sector_name)
-                
-                # sector 이름에서 숫자 추출 (예: "sector8" -> "8")
-                sector_number = re.search(r'\d+', sector_name)
-                if sector_number:
-                    section_num = sector_number.group()
-                    
-                    # 이미지 파일 이름 생성: A3R8_section8.jpg
-                    image_filename = f"{mission_code}_sector{section_num}.jpg"
-                    image_path = os.path.join("/tmp", image_filename)
-                    
-                    # 현재 프레임 캡처
-                    cv2.imwrite(image_path, frame)
-                    print(f"[FIRE BUILDING] {sector_name} 감지 → 이미지 캡처: {image_filename}")
-                    
-                    # 서버로 이미지 전송
-                    send_dashboard_image(image_path)
-                    
-                    # 임시 파일 삭제
-                    # try:
-                    #     os.remove(image_path)
-                    # except:
-                    #     pass
-                else:
-                    print(f"[WARNING] sector 이름에서 숫자를 추출할 수 없습니다: {sector_name}")
-        except FileNotFoundError:
-            print(f"[WARNING] JSON 파일을 찾을 수 없습니다: {JSON_PATH}")
+
+                # 이미지 촬영/전송은 하지 않음
+                # → main에서 처리
+                print(f"[FIRE BUILDING] {sector_name} 감지 → 회전 및 촬영은 main에서 수행")
+
         except Exception as e:
             print(f"[ERROR] fire_building 확인 중 오류: {e}")
-    
+
     def detect(self, frame):
         """
         최적화된 ArUco 마커 감지 (ROI + CLAHE + Sharpen + AdaptiveThreshold)

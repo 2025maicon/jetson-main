@@ -109,7 +109,7 @@ def send_dashboard_image(image_path):
             }
             
             response = requests.post(
-                f'{SERVER_URL}/img/dashboard/fire_building',
+                f'{SERVER_URL}/img/dashboard/fire_building/{image_file.name}',
                 files=files,
                 timeout=10
             )

@@ -69,7 +69,7 @@ def send_to_server(point=None, detected_objects=None, points=None, fire_building
 
     json_content = json.dumps(payload, indent=2, ensure_ascii=False)
     files = {
-        'file': (f"mission_{payload['mission_code']}.json", json_content, 'application/json')
+        'file': (f"{payload['mission_code']}.json", json_content, 'application/json')
     }
 
     try:

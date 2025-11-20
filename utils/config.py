@@ -47,7 +47,7 @@ DST_POINTS = np.float32([
 
 # 포트홀 감지 파라미터
 POTHOLE_DETECT_FRAMES = 4       # 연속 판정 프레임 수 (감도)
-POTHOLE_COOLDOWN = 19.0         # 회피 후 재감지 대기(sec)
+POTHOLE_COOLDOWN = 60.0         # 회피 후 재감지 대기(sec)
 POTHOLE_MIN_ABS = 0.01          # 절대 최소 흰색 비율 (너무 작은 값이면 무시)
 POTHOLE_RATIO = 0.4             # 기준(EMA) 대비 이 비율보다 작으면 포트홀로 판단
 EMA_ALPHA = 0.05                # EMA 업데이트 계수 (기준 적응 속도)

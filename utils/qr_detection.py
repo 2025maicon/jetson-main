@@ -119,4 +119,31 @@ class QRDetector:
         
         print("[QR] QR 코드 인식 실패 (주행 계속 진행)")
         return ""
+    
+    def detect_from_frame(self, frame, led_controller=None):
+        """프레임에서 QR 코드 인식 및 LED 제어 (메인 루프용)
+        
+        Args:
+            frame: 입력 프레임 (BGR, 이미 회전 보정된 프레임)
+            led_controller: LEDController 객체 (선택사항, 제공 시 자동으로 LED 제어)
+            
+        Returns:
+            str: 인식된 QR 코드 데이터 (없으면 빈 문자열)
+        """
+        # QR 코드 인식
+        qr_data, bbox, _ = self.detect(frame)
+        
+        if qr_data:
+            print(f"[QR] QR 코드 인식 성공: {qr_data}")
+            
+            # LED 제어기가 제공된 경우 자동으로 LED 제어
+            if led_controller is not None:
+                if led_controller.handle_qr_code(qr_data):
+                    print(f"[LED] QR 코드에 맞는 LED 패턴 표시 완료")
+                else:
+                    print(f"[LED] 알 수 없는 QR 코드: {qr_data}")
+            
+            return qr_data
+        
+        return ""
 

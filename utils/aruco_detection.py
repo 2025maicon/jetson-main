@@ -119,10 +119,10 @@ class ArUcoDetector:
                     send_dashboard_image(image_path)
                     
                     # 임시 파일 삭제
-                    try:
-                        os.remove(image_path)
-                    except:
-                        pass
+                    # try:
+                    #     os.remove(image_path)
+                    # except:
+                    #     pass
                 else:
                     print(f"[WARNING] sector 이름에서 숫자를 추출할 수 없습니다: {sector_name}")
         except FileNotFoundError:

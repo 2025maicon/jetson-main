@@ -105,11 +105,11 @@ def send_dashboard_image(image_path):
         
         with open(image_file, "rb") as f:
             files = {
-                'file': (image_file.name, f, 'image/jpeg')
+                'file': (image_path.split('/')[-1], f, 'image/jpeg')
             }
             
             response = requests.post(
-                f'{SERVER_URL}/img/dashboard/fire_building/{image_file.name}',
+                f'{SERVER_URL}/img/dashboard/fire_building',
                 files=files,
                 timeout=10
             )

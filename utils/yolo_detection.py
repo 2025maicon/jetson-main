@@ -70,7 +70,7 @@ class YOLODetector:
 
         # ROI 하단 기준 (아래에서 20~80 px)
         self.ROI_BOTTOM_MARGIN = 80
-        self.ROI_HEIGHT = 240
+        self.ROI_HEIGHT = 200
 
     def detect_objects(self, frame, frame_idx, detection_interval=1):
         if frame_idx % detection_interval != 0:

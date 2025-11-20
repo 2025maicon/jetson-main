@@ -131,6 +131,7 @@ class QRDetector:
             str: 인식된 QR 코드 데이터 (없으면 빈 문자열)
         """
         # QR 코드 인식
+        print("[QR] 프레임에서 QR 코드 인식 시작...")
         qr_data, bbox, _ = self.detect(frame)
         
         if qr_data:

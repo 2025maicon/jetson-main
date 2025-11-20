@@ -3,6 +3,7 @@
 """
 import json
 import os
+import copy
 import requests
 from pathlib import Path
 from utils.config import JSON_PATH, SERVER_URL
@@ -60,6 +61,7 @@ def send_to_server(point=None, detected_objects=None, points=None, fire_building
     
     final_detection = merged_detection
     
+    # 원본 payload (JSON 파일 저장용 - 원본 데이터 유지)
     payload = {
         "mission_code": base_payload.get("mission_code", "A3R8"),
         "fire_buildings": base_payload.get("fire_buildings", []),
@@ -68,17 +70,22 @@ def send_to_server(point=None, detected_objects=None, points=None, fire_building
     }
     print("통신보고 json 파일 내용 : ",payload)
 
-    json_content = json.dumps(payload, indent=2, ensure_ascii=False)
+    # POST 요청용 payload (points와 detection 키만 소문자로 변환)
+    send_payload = copy.deepcopy(payload)
+    # points 리스트의 값들을 소문자로 변환
+    send_payload["points"] = [point.lower() if isinstance(point, str) else point for point in payload["points"]]
+
+    json_content = json.dumps(send_payload, indent=2, ensure_ascii=False)
     files = {
-        'file': (f"{payload['mission_code']}.json", json_content, 'application/json')
+        'file': (f"{send_payload['mission_code']}.json", json_content, 'application/json')
     }
 
     try:
-        print(f"[SEND] dashboard payload → points={payload['points']} detection_keys={list(payload['detection'].keys())}")
+        print(f"[SEND] dashboard payload → points={send_payload['points']} detection_keys={list(send_payload['detection'].keys())}")
         rsp = requests.post(f"{SERVER_URL}/dashboard_json", files=files, timeout=10)
         print("[Server Response]", rsp.text)
         
-        # 서버 전송 성공 후 JSON 파일에 payload 업데이트
+        # 서버 전송 성공 후 JSON 파일에 원본 payload 업데이트 (소문자 변환 없이)
         try:
             # 디렉토리가 없으면 생성
             os.makedirs(os.path.dirname(JSON_PATH), exist_ok=True)

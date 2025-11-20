@@ -81,7 +81,7 @@ class YOLODetector:
             return None, None
 
         frame_for_yolo = frame.copy()
-        results = self.model(frame_for_yolo, conf=self.conf)[0]
+        results = self.model(frame_for_yolo, conf=self.conf, verbose=False)[0]
 
         # YOLO → tracker 입력
         detections = []

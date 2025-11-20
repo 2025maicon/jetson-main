@@ -5,7 +5,7 @@ from utils.config import OBJECT_NAMES
 
 
 class SimpleTracker:
-    def __init__(self, iou_th=0.4):
+    def __init__(self, iou_th=0.2):
         self.iou_th = iou_th
         self.last_boxes = []
         self.track_ids = []
@@ -71,7 +71,7 @@ class YOLODetector:
         self.conf = conf
 
         # 초경량 트래커
-        self.tracker = SimpleTracker(iou_th=0.3)
+        self.tracker = SimpleTracker(iou_th=0.2)
 
         # track_id 중복 카운트 방지
         self.counted_ids = set()

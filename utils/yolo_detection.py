@@ -65,7 +65,7 @@ class YOLODetector:
         self.aruco_detector = aruco_detector
         self.object_names = OBJECT_NAMES
         self.conf = conf
-        self.tracker = SimpleTracker(iou_th=1.5)
+        self.tracker = SimpleTracker(iou_th=1)
         self.counted_ids = set()
 
         # ROI 하단 기준 (아래에서 20~80 px)

@@ -120,6 +120,45 @@ def send_dashboard_image(image_path):
         print(f"[ERROR] 이미지 전송 실패: {e}")
 
 
+def wait_for_json_file(max_retries=10):
+    """JSON 파일이 생성될 때까지 대기
+    
+    Args:
+        max_retries: 파일 읽기 재시도 횟수
+        
+    Returns:
+        dict: JSON 데이터 (실패 시 None)
+    """
+    import time
+    
+    print(f"[WAIT] JSON 파일 대기 중: {JSON_PATH}")
+    while not os.path.exists(JSON_PATH):
+        print(f"[WAIT] JSON 파일 대기 중... (0.5초마다 확인)")
+        time.sleep(0.5)
+    
+    # 파일이 생성되었지만 아직 쓰기 중일 수 있으므로, 읽기 성공할 때까지 재시도
+    retry_count = 0
+    json_loaded = False
+    json_data = None
+    
+    while not json_loaded and retry_count < max_retries:
+        try:
+            with open(JSON_PATH, 'r', encoding='utf-8') as f:
+                json_data = json.load(f)
+            json_loaded = True
+            print(f"[SUCCESS] JSON 파일 로드 완료: {JSON_PATH}")
+            print(f"  mission_code: {json_data.get('mission_code', 'N/A')}")
+        except (json.JSONDecodeError, IOError) as e:
+            retry_count += 1
+            if retry_count < max_retries:
+                print(f"[RETRY] JSON 파일 읽기 재시도 ({retry_count}/{max_retries}): {e}")
+                time.sleep(0.2)
+            else:
+                print(f"[WARNING] JSON 파일 읽기 최종 실패: {e}, 계속 진행합니다.")
+    
+    return json_data if json_loaded else None
+
+
 def startSend():
     """시작 통신 전송 (startdashboard 로직)
     JSON 파일에서 mission_code를 읽어서 빈 상태의 초기 데이터를 서버로 전송

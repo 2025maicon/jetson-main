@@ -43,20 +43,27 @@ def send_to_server(point=None, detected_objects=None, points=None, fire_building
     # detection 형식: {point_name: [{type: class_name, count: count}, ...]}
     
     # 기존 detection과 새로운 detection 병합
+    # sendjson.ipynb 형식: 각 point별로 배열이 있어야 함 (빈 배열이라도)
     base_detection = base_payload.get("detection", {})
+    final_points = points if points is not None else base_payload.get("points", [])
+    
+    # 모든 point에 대해 빈 배열로 초기화 (sendjson.ipynb 형식 준수)
+    merged_detection = {}
+    for point_name in final_points:
+        # 기존 detection에 있으면 사용, 없으면 빈 배열
+        merged_detection[point_name] = base_detection.get(point_name, [])
+    
+    # 새로운 detection 정보로 업데이트
     if detected_objects is not None:
-        # 새로운 detection을 기존 detection에 병합 (같은 point_name이면 덮어쓰기)
-        merged_detection = base_detection.copy()
         for point_name, detection_list in detected_objects.items():
             merged_detection[point_name] = detection_list
-        final_detection = merged_detection
-    else:
-        final_detection = base_detection
+    
+    final_detection = merged_detection
     
     payload = {
         "mission_code": base_payload.get("mission_code", "A3R8"),
         "fire_buildings": base_payload.get("fire_buildings", []),
-        "points": points if points is not None else base_payload.get("points", []),
+        "points": final_points,
         "detection": final_detection
     }
 

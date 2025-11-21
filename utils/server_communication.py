@@ -74,7 +74,14 @@ def send_to_server(point=None, detected_objects=None, points=None, fire_building
     send_payload = copy.deepcopy(payload)
     # points 리스트의 값들을 소문자로 변환
     send_payload["points"] = [point.lower() if isinstance(point, str) else point for point in payload["points"]]
-
+    # detection 내부 각 아이템의 count 값을 최대 2로 제한
+    send_payload["detection"] = {
+        key: [
+            {**item, "count": min(item.get("count", 0), 2)} if isinstance(item, dict) else item
+            for item in value
+        ]
+        for key, value in payload["detection"].items()
+    }
     json_content = json.dumps(send_payload, indent=2, ensure_ascii=False)
     files = {
         'file': (f"{send_payload['mission_code']}.json", json_content, 'application/json')
